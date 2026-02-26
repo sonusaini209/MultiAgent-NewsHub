@@ -1,5 +1,5 @@
 import streamlit as st
-from test import create_graph, explain_article, NewsState
+from agent import create_graph, explain_article, NewsState
 
 st.set_page_config(page_title="NewsInsight AI", page_icon="📰", layout="wide")
 
@@ -274,4 +274,5 @@ if __name__ == "__main__":
     if "generated" not in st.session_state:
         st.session_state.generated = False
     
+
     main()
