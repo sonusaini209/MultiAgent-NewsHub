@@ -2,7 +2,7 @@
   "buildCommand": "pip install -r requirements.txt",
   "installCommand": "pip install -r requirements.txt",
   "functions": {
-    "api/main.py": {
+    "app.py": {
       "runtime": "python3.11"
     }
   },
@@ -13,7 +13,7 @@
   "routes": [
     {
       "src": "/(.*)",
-      "dest": "api/main.py"
+      "dest": "app.py"
     }
   ]
 }
