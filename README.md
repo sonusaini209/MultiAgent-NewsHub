@@ -1,1 +1,1 @@
-# -MultiAgent-NewsHub
+# MultiAgent-NewsHub
