@@ -6,10 +6,6 @@
       "runtime": "python3.11"
     }
   },
-  "env": {
-    "NEWS_API_KEY": "@news_api_key",
-    "GROQ_API_KEY": "@groq_api_key"
-  },
   "routes": [
     {
       "src": "/(.*)",
