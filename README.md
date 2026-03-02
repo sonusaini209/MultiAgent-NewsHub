@@ -13,7 +13,7 @@
 
 ##  Live Demo
 
-**[https://your-app.vercel.app](https://your-app.vercel.app)**
+**https://multi-agent-news-hub.vercel.app/**
 
 > Replace with your actual Vercel URL after deploying.
 
