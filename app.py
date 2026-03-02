@@ -12,8 +12,8 @@ from agent import create_graph, explain_article, NewsState
 
 app = FastAPI(
     title="MultiAgent-NewsHub API",
-    description="AI-Powered Multi-Agent News Intelligence",
-    version="1.0.0"
+    description="AI-Powered Multi-Agent News Intelligence for Any Domain",
+    version="2.0.0"
 )
 
 app.add_middleware(
@@ -35,6 +35,8 @@ async def serve_ui():
 class GenerateRequest(BaseModel):
     query: str
     num_articles: int = 15
+    domain: str = "general"  # NEW: Domain context
+    language: str = "en"     # NEW: Language support
 
 class ExplainRequest(BaseModel):
     title: str
@@ -42,23 +44,51 @@ class ExplainRequest(BaseModel):
 
 @app.get("/api/health")
 async def health_check():
-    return {"status": "healthy", "version": "1.0.0"}
+    return {"status": "healthy", "version": "2.0.0", "features": ["domain-agnostic", "multi-language", "6-agent-pipeline"]}
 
-@app.get("/api/topics")
-async def get_topics():
-    topics = {
-        " AI & Machine Learning": "Artificial Intelligence OR Machine Learning OR AI",
-        " Deep Learning": "deep learning OR neural network OR transformer",
-        " Large Language Models": "LLM OR GPT OR language model OR ChatGPT",
-        " AI Research": "AI research OR AI breakthrough OR artificial intelligence research",
-        " AI in Business": "AI business OR enterprise AI OR business intelligence",
-        " Generative AI": "generative AI OR diffusion model OR text generation",
-        " AI in Healthcare": "AI healthcare OR medical AI OR diagnostic AI",
-        " AI in Autonomous Systems": "autonomous vehicle OR self-driving OR robotics",
-        " Data Science & AI": "data science OR machine learning analytics",
-        " AI & Creativity": "AI art OR generative art OR AI music",
+@app.get("/api/languages")
+async def get_languages():
+    """Get supported languages for news fetching"""
+    languages = {
+        "en": "English",
+        "es": "Español (Spanish)",
+        "fr": "Français (French)",
+        "de": "Deutsch (German)",
+        "it": "Italiano (Italian)",
+        "pt": "Português (Portuguese)",
+        "ru": "Русский (Russian)",
+        "ar": "العربية (Arabic)",
+        "zh": "中文 (Chinese)",
+        "nl": "Nederlands (Dutch)",
+        "no": "Norsk (Norwegian)",
+        "se": "Svenska (Swedish)"
     }
-    return {"topics": topics}
+    return {"languages": languages, "default": "en"}
+
+@app.get("/api/suggested-domains")
+async def get_suggested_domains():
+    """Get examples of domains you can search (not limited to these)"""
+    domains = {
+        "Technology": "AI, blockchain, cybersecurity, quantum computing, semiconductors",
+        "Business & Finance": "Stock market, cryptocurrency, startups, economics, mergers & acquisitions",
+        "Healthcare": "Medical research, pharmaceuticals, vaccines, mental health, biotechnology",
+        "Climate & Environment": "Climate change, renewable energy, conservation, sustainability, green tech",
+        "Politics & Government": "Elections, policy, international relations, governance, legislation",
+        "Science & Research": "Physics, biology, space exploration, scientific breakthroughs",
+        "Sports": "Football, basketball, tennis, Olympics, esports, motorsports",
+        "Entertainment & Media": "Movies, music, streaming, celebrity, gaming, podcasts",
+        "Travel & Culture": "Tourism, cultural events, cities, food, lifestyle, fashion",
+        "Education": "Universities, online learning, EdTech, student life",
+        "Real Estate": "Housing market, commercial property, urban development, real estate tech",
+        "Agriculture": "Farming technology, sustainability, food production, agritech",
+        "Transportation": "Electric vehicles, autonomous vehicles, aviation, public transit",
+        "Retail & E-commerce": "Online shopping, retail trends, supply chain, consumer behavior",
+        "Telecommunication": "5G, internet, telecom companies, broadband"
+    }
+    return {
+        "note": "These are examples. You can search ANY topic, industry, or subject.",
+        "suggested_domains": domains
+    }
 
 @app.post("/api/generate")
 async def generate_report(request: GenerateRequest):
@@ -73,6 +103,8 @@ async def generate_report(request: GenerateRequest):
 
         initial_state = NewsState(
             query=request.query,
+            domain=request.domain,
+            language=request.language,
             num_articles=request.num_articles,
             raw_articles=[],
             curated_articles=[],
@@ -87,6 +119,8 @@ async def generate_report(request: GenerateRequest):
         return {
             "status": "success",
             "query": request.query,
+            "domain": request.domain,
+            "language": request.language,
             "articles_count": len(result["curated_articles"]),
             "articles": result["curated_articles"],
             "blog": result["blog_content"],
