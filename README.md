@@ -17,7 +17,7 @@
 Using **LangGraph** for workflow orchestration and **Groq** for ultra-fast LLM inference, this system delivers enterprise-grade news intelligence with minimal latency.
 
 ## Live Demo
-https://multiagent-newshub.vercel.app
+https://multi-agent-news-hub.vercel.app/
 
 ### ✨ Key Highlights
 
