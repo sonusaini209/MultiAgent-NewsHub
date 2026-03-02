@@ -15,6 +15,8 @@
 **MultiAgent-NewsHub** is a sophisticated multi-agent intelligence platform that orchestrates 6 specialized AI agents to analyze, summarize, categorize, and forecast trends from news articles in real-time.
 
 Using **LangGraph** for workflow orchestration and **Groq** for ultra-fast LLM inference, this system delivers enterprise-grade news intelligence with minimal latency.
+🌐 Live Demo
+https://multiagent-newshub.vercel.app
 
 ### ✨ Key Highlights
 
