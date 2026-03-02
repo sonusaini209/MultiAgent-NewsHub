@@ -135,75 +135,9 @@ GROQ_API_KEY=gsk_your_groq_key_here
 
    Open [http://localhost:8000](http://localhost:8000) in your browser.
 
----
 
-## 📡 API Endpoints
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `GET` | `/` | Serves the frontend UI |
-| `GET` | `/api/health` | Health check |
-| `GET` | `/api/topics` | Returns all predefined topics |
-| `POST` | `/api/generate` | Runs the full 6-agent pipeline |
-| `POST` | `/api/explain` | Returns explanation of a single article |
-
-### POST `/api/generate`
-```json
-{
-  "query": "Large Language Models",
-  "num_articles": 15
-}
-```
-
-**Response includes:** `articles`, `blog`, `summary`, `categories`, `trends`
-
-### POST `/api/explain`
-```json
-{
-  "title": "Article title",
-  "content": "Article content"
-}
-```
-
----
-
-## 🐛 Troubleshooting
-
-**"API Key not set"**
-Make sure `.env` exists locally, or environment variables are added in Vercel Dashboard.
-
-**"No articles found"**
-Check your NewsAPI key is valid and you haven't hit the 100 requests/day free tier limit.
-
-**"LLM timeout"**
-Reduce the article count. Groq free tier has rate limits — try again after a moment.
-
-**Port already in use**
-```bash
-uvicorn app:app --reload --port 8001
-```
-
----
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch — `git checkout -b feature/my-feature`
-3. Commit your changes
-4. Push and open a Pull Request
-
----
-
-## 📝 License
+##  License
 
 MIT — see [LICENSE](./LICENSE) for details.
-
----
-
-<div align="center">
-
-Made with ❤️ by [Sonu Saini](https://github.com/sonusaini209)
-
-⭐ Star this repo if you found it useful!
 
 </div>
