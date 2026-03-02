@@ -1,4 +1,4 @@
-# 📰 MultiAgent-NewsHub
+#  MultiAgent-NewsHub
 
 > **AI-Powered Multi-Agent News Intelligence Platform** | Orchestrated Analysis | Real-Time Insights
 
