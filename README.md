@@ -1,313 +1,209 @@
-# 📰 MultiAgent-NewsHub
+# 📰 MultiAgent NewsHub
 
-> **AI-Powered Multi-Agent News Intelligence Platform** | Orchestrated Analysis | Real-Time Insights
+> AI-Powered Multi-Agent News Intelligence Platform
 
 [![Python 3.9+](https://img.shields.io/badge/Python-3.9+-blue.svg)](https://www.python.org/downloads/)
-[![Streamlit](https://img.shields.io/badge/Built%20with-Streamlit-red.svg)](https://streamlit.io)
-[![LangGraph](https://img.shields.io/badge/Powered%20by-LangGraph-green.svg)](https://langchain-ai.github.io/langgraph/)
+[![FastAPI](https://img.shields.io/badge/Backend-FastAPI-009688.svg)](https://fastapi.tiangolo.com)
+[![LangGraph](https://img.shields.io/badge/Orchestration-LangGraph-green.svg)](https://langchain-ai.github.io/langgraph/)
 [![Groq](https://img.shields.io/badge/LLM-Groq-orange.svg)](https://console.groq.com)
+[![Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black.svg)](https://your-app.vercel.app)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
+---
+
+## 🌐 Live Demo
+
+**[https://your-app.vercel.app](https://your-app.vercel.app)**
+
+> Replace with your actual Vercel URL after deploying.
 
 ---
 
 ## 🎯 Overview
 
-**MultiAgent-NewsHub** is a sophisticated multi-agent intelligence platform that orchestrates 6 specialized AI agents to analyze, summarize, categorize, and forecast trends from news articles in real-time.
-
-Using **LangGraph** for workflow orchestration and **Groq** for ultra-fast LLM inference, this system delivers enterprise-grade news intelligence with minimal latency.
-
-## Live Demo
-https://multi-agent-news-hub.vercel.app/
-
-### ✨ Key Highlights
-
-- 🤖 **6 Specialized AI Agents** - Each focused on specific analysis tasks
-- 🔄 **LangGraph Orchestration** - Seamless workflow coordination
-- ⚡ **Groq LLM** - Lightning-fast inference (70B parameters)
-- 📊 **Multi-Dimensional Analysis** - Blog, Summary, Categories, Trends, Explanations
-- 🎨 **Beautiful UI** - Professional Streamlit interface
-- 🏗️ **Clean Architecture** - Separated logic and UI modules
-- 📈 **10 AI Topics** - Focused on AI/ML domain
-- 🔧 **Production Ready** - Error handling, caching, optimization
-
----
-
-## 🚀 Quick Start
-
-### Prerequisites
-
-```bash
-✓ Python 3.9 or higher
-✓ pip or conda
-✓ NewsAPI Key (free at newsapi.org)
-✓ Groq API Key (free at console.groq.com)
-```
-
-### Installation
-
-1. **Clone repository**
-```bash
-git clone https://github.com/yourusername/MultiAgent-NewsHub.git
-cd MultiAgent-NewsHub
-```
-
-2. **Create environment**
-```bash
-python -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
-```
-
-3. **Install dependencies**
-```bash
-pip install -r requirements.txt
-```
-
-4. **Setup API keys**
-```bash
-cp .env.example .env
-# Edit .env with your keys
-```
-
-5. **Run application**
-```bash
-streamlit run ui.py
-```
-
-🌐 Opens at http://localhost:8501
-
----
-
-## 📋 Dependencies
-
-```
-streamlit==1.28.1
-langchain-groq==0.1.5
-langgraph==0.1.15
-langchain-core==0.1.35
-pydantic==2.5.0
-requests==2.31.0
-python-dotenv==1.0.0
-```
-
----
-
-## 🔑 API Setup
-
-### NewsAPI (Free)
-- Visit: https://newsapi.org
-- Create account
-- Copy API key
-- Add to .env: `NEWS_API_KEY=your_key`
-
-### Groq API (Free)
-- Visit: https://console.groq.com
-- Create account
-- Generate API key
-- Add to .env: `GROQ_API_KEY=gsk_your_key`
-
-### .env Template
-```env
-NEWS_API_KEY=your_newsapi_key_here
-GROQ_API_KEY=gsk_your_groq_key_here
-```
-
----
-
-## 🤖 Architecture
-
-### Multi-Agent Workflow
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    LANGGRAPH ORCHESTRATION                   │
-├─────────────────────────────────────────────────────────────┤
-│                                                               │
-│  1️⃣ FETCHER          → Get articles from NewsAPI            │
-│         ↓                                                     │
-│  2️⃣ CURATOR          → Remove duplicates                     │
-│         ↓                                                     │
-│  3️⃣ BLOGGER          → Write comprehensive blog             │
-│         ↓                                                     │
-│  4️⃣ SUMMARIZER       → Executive summary                    │
-│         ↓                                                     │
-│  5️⃣ CATEGORIZER      → Organize by topics                   │
-│         ↓                                                     │
-│  6️⃣ TREND ANALYZER   → Find patterns & trends               │
-│         ↓                                                     │
-│  ON-DEMAND: EXPLAINER → Deep dive articles                  │
-│                                                               │
-└─────────────────────────────────────────────────────────────┘
-```
-
-### Project Structure
-
-```
-MultiAgent-NewsHub/
-├── logic.py              # Core agents & business logic
-├── ui.py                 # Streamlit interface
-├── requirements.txt      # Dependencies
-├── .env.example          # Environment template
-├── README.md             # Documentation
-└── .gitignore            # Git ignore
-```
-
----
-
-## 📖 How to Use
-
-### Step 1: Select Topic
-Choose from 10 predefined AI/ML topics or enter custom query
-
-### Step 2: Configure
-- Set article count (1-50)
-- Enable custom search (optional)
-
-### Step 3: Generate
-Click "🚀 Generate" button and wait (1-2 minutes)
-
-### Step 4: Explore
-- **Links** - All article URLs
-- **Blog** - Comprehensive analysis
-- **Summary** - Quick overview
-- **Categories** - Organized articles
-- **Trends** - Pattern analysis
-- **Explain** - Deep dive any article
-
-### Available Topics
-
-```
-🤖 AI & Machine Learning     🧠 Deep Learning
-🤖 Large Language Models     🔬 AI Research
-🏢 AI in Business            🤖 Generative AI
-🧬 AI in Healthcare          🚗 AI in Autonomous Systems
-📊 Data Science & AI         🎨 AI & Creativity
-```
-
----
-
-## 🔌 Integrations
-
-### NewsAPI
-- **Source**: Global news aggregation
-- **Limit**: 100 requests/day (free tier)
-- **Docs**: newsapi.org/docs
-
-### Groq API
-- **Model**: llama-3.3-70b-versatile
-- **Speed**: 5x faster than alternatives
-- **Cost**: Free tier available
-- **Docs**: console.groq.com
+MultiAgent NewsHub orchestrates **6 specialized AI agents** using LangGraph to fetch, analyze, and summarize news articles in real-time. Pick a topic, hit Generate, and get a full blog post, executive summary, categorized articles, and trend analysis — instantly.
 
 ---
 
 ## ✨ Features
 
-### Intelligence
-✅ Smart summarization | ✅ Trend detection | ✅ Auto-categorization
-✅ Deep explanations | ✅ Professional blogs
-
-### Technical
-✅ LangGraph orchestration | ✅ Fast inference | ✅ Error handling
-✅ Session caching | ✅ Clean architecture
-
-### Experience
-✅ Beautiful UI | ✅ Light theme | ✅ Responsive | ✅ Interactive tabs
-✅ Real-time feedback
+- 🤖 **6 Specialized AI Agents** — each focused on a specific task
+- 📰 **10 Predefined AI/ML Topics** — or enter any custom query
+- 📊 **5 Output Tabs** — Articles, Blog, Summary, Categories, Trends
+- 🔍 **Article Explainer** — plain-English breakdown of any article on demand
+- 🌐 **Built-in Web UI** — dark-themed, responsive, no extra setup
+- 🚀 **Deployed on Vercel** — accessible from anywhere
 
 ---
 
-## 📊 Performance
+## 🤖 Agent Pipeline
 
-| Feature | Time |
-|---------|------|
-| Fetch articles | ~2s |
-| Generate blog | ~20s |
-| Full report | ~45s |
-| Explanation | ~10s |
-| Max concurrent users | 5+ |
+```
+NewsAPI
+   ↓
+1️⃣  Fetcher        →  Pull latest articles from NewsAPI
+2️⃣  Curator        →  Deduplicate and clean articles
+3️⃣  Blogger        →  Write a comprehensive blog post
+4️⃣  Summarizer     →  Generate an executive summary
+5️⃣  Categorizer    →  Group articles by topic
+6️⃣  Trend Analyzer →  Detect patterns and forecast trends
+
+On Demand:
+🔍  Explainer      →  Plain-English explanation of any article
+```
+
+---
+
+## 🗂️ Project Structure
+
+```
+MultiAgent-NewsHub/
+├── agent.py           # 6 AI agents + LangGraph workflow
+├── app.py             # FastAPI backend — serves UI + API routes
+├── index.html         # Frontend (dark UI, no framework)
+├── requirements.txt   # Python dependencies
+├── vercel.json        # Vercel deployment config
+├── .env               # API keys — never commit this
+├── .gitignore         # Excludes .env
+└── README.md
+```
+
+---
+
+## 🔑 API Keys Required
+
+You need two free API keys.
+
+**1. NewsAPI** — [newsapi.org](https://newsapi.org)
+- Sign up for a free account
+- Copy your API key (100 requests/day on free tier)
+
+**2. Groq API** — [console.groq.com](https://console.groq.com)
+- Sign up for a free account
+- Generate an API key
+- Model used: `llama-3.3-70b-versatile`
+
+Create a `.env` file in the project root:
+
+```env
+NEWS_API_KEY=your_newsapi_key_here
+GROQ_API_KEY=gsk_your_groq_key_here
+```
+
+> ⚠️ `.gitignore` already excludes `.env` — never push your keys to GitHub.
+
+---
+
+## 💻 Run Locally
+
+**Prerequisites:** Python 3.9+, pip
+
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/sonusaini209/MultiAgent-NewsHub
+   cd MultiAgent-NewsHub
+   ```
+
+2. **Create a virtual environment**
+   ```bash
+   python -m venv venv
+
+   # macOS / Linux
+   source venv/bin/activate
+
+   # Windows
+   venv\Scripts\activate
+   ```
+
+3. **Install dependencies**
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+4. **Add your API keys**
+
+   Create a `.env` file:
+   ```env
+   NEWS_API_KEY=your_newsapi_key_here
+   GROQ_API_KEY=gsk_your_groq_key_here
+   ```
+
+5. **Start the server**
+   ```bash
+   uvicorn app:app --reload
+   ```
+
+   Open [http://localhost:8000](http://localhost:8000) in your browser.
+
+---
+
+## 📡 API Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/` | Serves the frontend UI |
+| `GET` | `/api/health` | Health check |
+| `GET` | `/api/topics` | Returns all predefined topics |
+| `POST` | `/api/generate` | Runs the full 6-agent pipeline |
+| `POST` | `/api/explain` | Returns explanation of a single article |
+
+### POST `/api/generate`
+```json
+{
+  "query": "Large Language Models",
+  "num_articles": 15
+}
+```
+
+**Response includes:** `articles`, `blog`, `summary`, `categories`, `trends`
+
+### POST `/api/explain`
+```json
+{
+  "title": "Article title",
+  "content": "Article content"
+}
+```
 
 ---
 
 ## 🐛 Troubleshooting
 
 **"API Key not set"**
-- Create .env file
-- Add both API keys
-- Restart app
+Make sure `.env` exists locally, or environment variables are added in Vercel Dashboard.
 
 **"No articles found"**
-- Verify API key
-- Check search query
-- Check API limits
+Check your NewsAPI key is valid and you haven't hit the 100 requests/day free tier limit.
 
 **"LLM timeout"**
-- Reduce article count
-- Check internet
-- Try again later
+Reduce the article count. Groq free tier has rate limits — try again after a moment.
 
-**"Port already in use"**
+**Port already in use**
 ```bash
-streamlit run ui.py --server.port 8502
-```
-
----
-
-## 🚀 Deployment
-
-### Streamlit Cloud (Easiest)
-1. Push to GitHub
-2. Visit share.streamlit.io
-3. Deploy!
-
-### Docker
-```bash
-docker build -t multiagent-newshub .
-docker run -p 8501:8501 multiagent-newshub
+uvicorn app:app --reload --port 8001
 ```
 
 ---
 
 ## 🤝 Contributing
 
-Contributions welcome! 
-
-1. Fork repository
-2. Create feature branch
-3. Commit changes
-4. Push & create PR
-
-### Ideas
-- Better UI/UX
-- New agents
-- More news sources
-- Data visualizations
-- Authentication system
+1. Fork the repository
+2. Create a feature branch — `git checkout -b feature/my-feature`
+3. Commit your changes
+4. Push and open a Pull Request
 
 ---
 
 ## 📝 License
 
-MIT License - Open source for everyone
-
----
-
-## 🙏 Credits
-
-- **LangChain** - LangGraph orchestration
-- **Groq** - Ultra-fast LLM inference
-- **Streamlit** - Beautiful web framework
-- **NewsAPI** - Global news data
+MIT — see [LICENSE](./LICENSE) for details.
 
 ---
 
 <div align="center">
 
-### ⭐ Found it useful? Give us a star!
+Made with ❤️ by [Sonu Saini](https://github.com/sonusaini209)
 
-Made with ❤️ by [Your Name](https://github.com/yourusername)
-
-[GitHub](https://github.com/yourusername/MultiAgent-NewsHub) • [Issues](https://github.com/yourusername/MultiAgent-NewsHub/issues) • [Features](https://github.com/yourusername/MultiAgent-NewsHub/issues)
-
-**Version**: 1.0.0 | **Last Updated**: January 2025
+⭐ Star this repo if you found it useful!
 
 </div>
