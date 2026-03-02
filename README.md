@@ -15,24 +15,24 @@
 
 **https://multi-agent-news-hub.vercel.app/**
 
-> Replace with your actual Vercel URL after deploying.
-
 ---
 
 ##  Overview
 
-MultiAgent NewsHub orchestrates **6 specialized AI agents** using LangGraph to fetch, analyze, and summarize news articles in real-time. Pick a topic, hit Generate, and get a full blog post, executive summary, categorized articles, and trend analysis — instantly.
+MultiAgent NewsHub is an AI-powered news intelligence platform that transforms raw news into structured insights using a LangGraph-orchestrated pipeline of 6 AI agents, each with a distinct role.
+It connects to NewsAPI to fetch articles, then passes them through a sequential chain — a Fetcher pulls the data, a Curator deduplicates it, a Blogger writes a long-form analysis, a Summarizer distills key points, a Categorizer groups articles by theme, and a Trend Analyzer identifies patterns and future implications. An on-demand Explainer agent can also break down any individual article in plain English.
+The backend is FastAPI, deployed on Vercel, serving both the API and a lightweight dark-themed UI from a single app.
 
 ---
 
 ##  Features
 
-- 🤖 **6 Specialized AI Agents** — each focused on a specific task
-- 📰 **10 Predefined AI/ML Topics** — or enter any custom query
-- 📊 **5 Output Tabs** — Articles, Blog, Summary, Categories, Trends
-- 🔍 **Article Explainer** — plain-English breakdown of any article on demand
-- 🌐 **Built-in Web UI** — dark-themed, responsive, no extra setup
-- 🚀 **Deployed on Vercel** — accessible from anywhere
+-  **6 Specialized AI Agents** — each focused on a specific task
+-  **10 Predefined AI/ML Topics** — or enter any custom query
+-  **5 Output Tabs** — Articles, Blog, Summary, Categories, Trends
+-  **Article Explainer** — plain-English breakdown of any article on demand
+-  **Built-in Web UI** — dark-themed, responsive, no extra setup
+-  **Deployed on Vercel** — accessible from anywhere
 
 ---
 
@@ -70,7 +70,7 @@ MultiAgent-NewsHub/
 
 ---
 
-## 🔑 API Keys Required
+##  API Keys Required
 
 You need two free API keys.
 
