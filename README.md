@@ -31,7 +31,7 @@ The backend is FastAPI, deployed on Vercel, serving both the API and a lightweig
 -  **10 Predefined AI/ML Topics** — or enter any custom query
 -  **5 Output Tabs** — Articles, Blog, Summary, Categories, Trends
 -  **Article Explainer** — plain-English breakdown of any article on demand
--  **Built-in Web UI** — dark-themed, responsive, no extra setup
+-  **Built-in Web UI** — dark-themed, responsive
 -  **Deployed on Vercel** — accessible from anywhere
 
 ---
