@@ -59,8 +59,8 @@ On Demand:
 ```
 MultiAgent-NewsHub/
 ├── agent.py           # 6 AI agents + LangGraph workflow
-├── app.py             # FastAPI backend — serves UI + API routes
-├── index.html         # Frontend (dark UI, no framework)
+├── app.py             # FastAPI backend 
+├── index.html         # Frontend 
 ├── requirements.txt   # Python dependencies
 ├── vercel.json        # Vercel deployment config
 ├── .env               # API keys — never commit this
