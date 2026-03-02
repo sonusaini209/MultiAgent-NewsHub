@@ -1,4 +1,4 @@
-# 📰 MultiAgent NewsHub
+#  MultiAgent NewsHub
 
 > AI-Powered Multi-Agent News Intelligence Platform
 
@@ -11,7 +11,7 @@
 
 ---
 
-## 🌐 Live Demo
+##  Live Demo
 
 **[https://your-app.vercel.app](https://your-app.vercel.app)**
 
@@ -19,13 +19,13 @@
 
 ---
 
-## 🎯 Overview
+##  Overview
 
 MultiAgent NewsHub orchestrates **6 specialized AI agents** using LangGraph to fetch, analyze, and summarize news articles in real-time. Pick a topic, hit Generate, and get a full blog post, executive summary, categorized articles, and trend analysis — instantly.
 
 ---
 
-## ✨ Features
+##  Features
 
 - 🤖 **6 Specialized AI Agents** — each focused on a specific task
 - 📰 **10 Predefined AI/ML Topics** — or enter any custom query
@@ -36,7 +36,7 @@ MultiAgent NewsHub orchestrates **6 specialized AI agents** using LangGraph to f
 
 ---
 
-## 🤖 Agent Pipeline
+##  Agent Pipeline
 
 ```
 NewsAPI
@@ -49,12 +49,12 @@ NewsAPI
 6️⃣  Trend Analyzer →  Detect patterns and forecast trends
 
 On Demand:
-🔍  Explainer      →  Plain-English explanation of any article
+  Explainer      →  Plain-English explanation of any article
 ```
 
 ---
 
-## 🗂️ Project Structure
+##  Project Structure
 
 ```
 MultiAgent-NewsHub/
@@ -94,7 +94,7 @@ GROQ_API_KEY=gsk_your_groq_key_here
 
 ---
 
-## 💻 Run Locally
+##  Run Locally
 
 **Prerequisites:** Python 3.9+, pip
 
