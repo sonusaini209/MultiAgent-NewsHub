@@ -1,6 +1,6 @@
 import os
 import requests
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 from langchain_groq import ChatGroq
 from langchain_core.prompts import ChatPromptTemplate
 from pydantic import BaseModel
@@ -22,6 +22,8 @@ class NewsArticle(BaseModel):
 
 class NewsState(dict):
     query: str
+    domain: str  # NEW: Track domain for context
+    language: str  # NEW: Language support
     num_articles: int
     raw_articles: List[NewsArticle]
     curated_articles: List[Dict[str, Any]]
@@ -40,9 +42,17 @@ def get_llm():
         max_tokens=2048
     )
 
-def fetch_top_news(query: str, max_articles: int) -> List[NewsArticle]:
+def fetch_top_news(query: str, max_articles: int, language: str = "en") -> List[NewsArticle]:
+    """
+    Fetch news from NewsAPI
+    Supports: en, es, fr, de, it, pt, ru, ar, zh, nl, no, se
+    """
     if not NEWS_API_KEY:
         return []
+    
+    valid_languages = ["en", "es", "fr", "de", "it", "pt", "ru", "ar", "zh", "nl", "no", "se"]
+    if language not in valid_languages:
+        language = "en"
     
     try:
         response = requests.get(
@@ -50,7 +60,7 @@ def fetch_top_news(query: str, max_articles: int) -> List[NewsArticle]:
             params={
                 "q": query,
                 "sortBy": "publishedAt",
-                "language": "en",
+                "language": language,
                 "pageSize": max_articles,
                 "apiKey": NEWS_API_KEY
             },
@@ -81,6 +91,7 @@ def fetch_top_news(query: str, max_articles: int) -> List[NewsArticle]:
         return []
 
 def curate_articles(articles: List[NewsArticle]) -> List[Dict[str, Any]]:
+    """Deduplicate and clean articles"""
     curated = []
     seen_titles = set()
 
@@ -104,14 +115,21 @@ def curate_articles(articles: List[NewsArticle]) -> List[Dict[str, Any]]:
     return curated
 
 def agent_fetch_news(state: NewsState) -> NewsState:
-    state["raw_articles"] = fetch_top_news(state["query"], state["num_articles"])
+    """Agent 1: Fetch latest articles"""
+    state["raw_articles"] = fetch_top_news(
+        state["query"], 
+        state["num_articles"],
+        state.get("language", "en")
+    )
     return state
 
 def agent_curate_news(state: NewsState) -> NewsState:
+    """Agent 2: Deduplicate and clean"""
     state["curated_articles"] = curate_articles(state["raw_articles"])
     return state
 
 def prompt_chain(llm, template: str, data: Dict) -> str:
+    """Execute a prompt template"""
     if not llm:
         return "Error: LLM not initialized"
     try:
@@ -120,6 +138,7 @@ def prompt_chain(llm, template: str, data: Dict) -> str:
         return f"Error: {str(e)}"
 
 def agent_generate_blog(state: NewsState) -> NewsState:
+    """Agent 3: Write comprehensive blog post"""
     llm = get_llm()
     if not llm or not state["curated_articles"]:
         state["blog_content"] = "No content"
@@ -130,10 +149,14 @@ def agent_generate_blog(state: NewsState) -> NewsState:
         for i, article in enumerate(state["curated_articles"])
     ])
     
-    template = """Write a comprehensive, well-structured blog post analyzing these news articles:
+    domain_context = f"Topic: {state.get('domain', 'general')}" if state.get('domain') else ""
+    
+    template = f"""Write a comprehensive, well-structured blog post analyzing these news articles:
+
+{domain_context}
 
 ARTICLES:
-{articles}
+{{articles}}
 
 Requirements:
 1. **Headline** - Compelling and descriptive (8-12 words)
@@ -151,6 +174,7 @@ BEGIN:"""
     return state
 
 def agent_generate_summary(state: NewsState) -> NewsState:
+    """Agent 4: Generate executive summary"""
     llm = get_llm()
     if not llm or not state["curated_articles"]:
         state["summary_content"] = "No content"
@@ -174,6 +198,7 @@ Target: 150-200 words, clear and scannable."""
     return state
 
 def agent_categorize(state: NewsState) -> NewsState:
+    """Agent 5: Organize by category"""
     llm = get_llm()
     if not llm or not state["curated_articles"]:
         state["categories_content"] = "No content"
@@ -191,12 +216,13 @@ For each category:
    - List relevant articles
    - Brief explanation of why grouped together
 
-Keep categories clear and useful. Maximum 5 categories."""
+Keep categories clear and useful. Maximum 5-7 categories."""
     
     state["categories_content"] = prompt_chain(llm, template, {"articles": articles_text})
     return state
 
 def agent_analyze_trends(state: NewsState) -> NewsState:
+    """Agent 6: Identify patterns and forecast"""
     llm = get_llm()
     if not llm or not state["curated_articles"]:
         state["trends_content"] = "No content"
@@ -213,9 +239,10 @@ Identify and explain:
 1. **Main Trends** - What patterns emerge?
 2. **Most Discussed Topics** - What's getting attention?
 3. **Key Developments** - Major breakthroughs or changes
-4. **Market Impact** - Who benefits/loses?
+4. **Market/Industry Impact** - Who benefits/loses?
 5. **Timeline** - When will key events likely happen?
 6. **Future Outlook** - What comes next?
+7. **Global Implications** - Wider world impact?
 
 Be specific and insightful."""
     
@@ -223,6 +250,7 @@ Be specific and insightful."""
     return state
 
 def create_graph():
+    """Create the LangGraph workflow"""
     workflow = StateGraph(NewsState)
     
     workflow.add_node("fetch", agent_fetch_news)
@@ -243,6 +271,7 @@ def create_graph():
     return workflow.compile()
 
 def explain_article(title: str, content: str) -> str:
+    """Explain any article in plain English"""
     llm = get_llm()
     if not llm:
         return "AI not initialized"
