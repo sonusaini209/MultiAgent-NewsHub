@@ -1,5 +1,7 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 import sys
 import os
@@ -22,6 +24,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# ── Serve Frontend UI ─────────────────────────────────────────────────
+
+@app.get("/")
+async def serve_ui():
+    return FileResponse("index.html")
+
+# ── API Routes ────────────────────────────────────────────────────────
+
 class GenerateRequest(BaseModel):
     query: str
     num_articles: int = 15
@@ -30,20 +40,6 @@ class ExplainRequest(BaseModel):
     title: str
     content: str
 
-@app.get("/")
-async def root():
-    return {
-        "name": "MultiAgent-NewsHub API",
-        "version": "1.0.0",
-        "status": "running",
-        "endpoints": {
-            "health": "/api/health",
-            "topics": "/api/topics",
-            "generate": "/api/generate",
-            "explain": "/api/explain"
-        }
-    }
-
 @app.get("/api/health")
 async def health_check():
     return {"status": "healthy", "version": "1.0.0"}
@@ -51,16 +47,16 @@ async def health_check():
 @app.get("/api/topics")
 async def get_topics():
     topics = {
-        "🤖 AI & Machine Learning": "Artificial Intelligence OR Machine Learning OR AI",
-        "🧠 Deep Learning": "deep learning OR neural network OR transformer",
-        "🤖 Large Language Models": "LLM OR GPT OR language model OR ChatGPT",
-        "🔬 AI Research": "AI research OR AI breakthrough OR artificial intelligence research",
-        "🏢 AI in Business": "AI business OR enterprise AI OR business intelligence",
-        "🤖 Generative AI": "generative AI OR diffusion model OR text generation",
-        "🧬 AI in Healthcare": "AI healthcare OR medical AI OR diagnostic AI",
-        "🚗 AI in Autonomous Systems": "autonomous vehicle OR self-driving OR robotics",
-        "📊 Data Science & AI": "data science OR machine learning analytics",
-        "🎨 AI & Creativity": "AI art OR generative art OR AI music",
+        " AI & Machine Learning": "Artificial Intelligence OR Machine Learning OR AI",
+        " Deep Learning": "deep learning OR neural network OR transformer",
+        " Large Language Models": "LLM OR GPT OR language model OR ChatGPT",
+        " AI Research": "AI research OR AI breakthrough OR artificial intelligence research",
+        " AI in Business": "AI business OR enterprise AI OR business intelligence",
+        " Generative AI": "generative AI OR diffusion model OR text generation",
+        " AI in Healthcare": "AI healthcare OR medical AI OR diagnostic AI",
+        " AI in Autonomous Systems": "autonomous vehicle OR self-driving OR robotics",
+        " Data Science & AI": "data science OR machine learning analytics",
+        " AI & Creativity": "AI art OR generative art OR AI music",
     }
     return {"topics": topics}
 
@@ -69,12 +65,12 @@ async def generate_report(request: GenerateRequest):
     try:
         if not request.query or len(request.query.strip()) == 0:
             raise HTTPException(status_code=400, detail="Query cannot be empty")
-        
+
         if request.num_articles < 1 or request.num_articles > 50:
             raise HTTPException(status_code=400, detail="Articles must be between 1 and 50")
-        
+
         graph = create_graph()
-        
+
         initial_state = NewsState(
             query=request.query,
             num_articles=request.num_articles,
@@ -85,9 +81,9 @@ async def generate_report(request: GenerateRequest):
             categories_content="",
             trends_content=""
         )
-        
+
         result = graph.invoke(initial_state)
-        
+
         return {
             "status": "success",
             "query": request.query,
@@ -98,7 +94,7 @@ async def generate_report(request: GenerateRequest):
             "categories": result["categories_content"],
             "trends": result["trends_content"]
         }
-    
+
     except HTTPException:
         raise
     except Exception as e:
@@ -109,18 +105,18 @@ async def explain_article_endpoint(request: ExplainRequest):
     try:
         if not request.title or len(request.title.strip()) == 0:
             raise HTTPException(status_code=400, detail="Title cannot be empty")
-        
+
         if not request.content or len(request.content.strip()) == 0:
             raise HTTPException(status_code=400, detail="Content cannot be empty")
-        
+
         explanation = explain_article(request.title, request.content)
-        
+
         return {
             "status": "success",
             "title": request.title,
             "explanation": explanation
         }
-    
+
     except HTTPException:
         raise
     except Exception as e:
