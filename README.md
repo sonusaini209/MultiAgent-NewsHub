@@ -1,19 +1,4 @@
-#  MultiAgent NewsHub
 
-> AI-Powered Multi-Agent News Intelligence Platform
-
-[![Python 3.9+](https://img.shields.io/badge/Python-3.9+-blue.svg)](https://www.python.org/downloads/)
-[![FastAPI](https://img.shields.io/badge/Backend-FastAPI-009688.svg)](https://fastapi.tiangolo.com)
-[![LangGraph](https://img.shields.io/badge/Orchestration-LangGraph-green.svg)](https://langchain-ai.github.io/langgraph/)
-[![Groq](https://img.shields.io/badge/LLM-Groq-orange.svg)](https://console.groq.com)
-[![Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black.svg)](https://your-app.vercel.app)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-
----
-
-##  Live Demo
-
-**https://multi-agent-news-hub.vercel.app/**
 
 # MultiAgent NewsHub
 
