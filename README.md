@@ -1,29 +1,21 @@
-
-
 # MultiAgent NewsHub
 
-> AI-Powered News Intelligence with Supervisor-Orchestrated Multi-Agent Pipeline
+> AI-powered news intelligence with a LangGraph multi-agent pipeline: fetch, curate, plan, analyse, write, fact-check.
 
-[![Python 3.9+](https://img.shields.io/badge/Python-3.9+-blue.svg)](https://www.python.org/downloads/)
+[![Python 3.10+](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![FastAPI](https://img.shields.io/badge/Backend-FastAPI-009688.svg)](https://fastapi.tiangolo.com)
 [![LangGraph](https://img.shields.io/badge/Orchestration-LangGraph-green.svg)](https://langchain-ai.github.io/langgraph/)
 [![Groq](https://img.shields.io/badge/LLM-Groq%20Llama3.3--70b-orange.svg)](https://console.groq.com)
 [![Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black.svg)](https://multi-agent-news-hub.vercel.app/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
----
-
-## Live Demo
-
-**https://multi-agent-news-hub.vercel.app/**
+**Live demo:** https://multi-agent-news-hub.vercel.app/
 
 ---
 
 ## Overview
 
-MultiAgent NewsHub is an AI news intelligence platform built on a **true multi-agent architecture** — not a sequential pipeline. A LangGraph `StateGraph` with a **Supervisor agent** dynamically decides which analysis agents to activate, then fans them out in **parallel** using LangGraph's `Send` API. All agent runs are checkpointed via `MemorySaver`, making every session resumable by `thread_id`.
-
-The system connects to NewsAPI for real-time articles, passes them through an 8-node agent graph, and returns structured analysis: long-form blog, executive summary, thematic categories, and trend forecasts — all generated concurrently.
+You give it a topic. It pulls recent articles from NewsAPI, cleans them, and has a team of LLM agents produce a cited report: an executive summary, a long-form blog post, thematic categories and trend analysis. A critic agent fact-checks the drafts against the source articles and sends failed sections back for a rewrite.
 
 ---
 
@@ -31,62 +23,45 @@ The system connects to NewsAPI for real-time articles, passes them through an 8-
 
 ```
 START
-  │
-  ▼
-┌─────────┐     ┌──────────┐     ┌────────────┐
-│ Fetcher │────▶│  Curator │────▶│ Supervisor │
-└─────────┘     └──────────┘     └─────┬──────┘
-                                        │
-                          ┌─────────────┼──────────────────┐
-                          │  conditional_edges (LLM routes) │
-                          │                                  │
-                     retry│fetch              Send × N (parallel)
-                          │             ┌────────────────────┐
-                          │             │  analysis_agent ×4  │
-                          │             │  ┌──────────────┐   │
-                          │             │  │  Blog Agent  │   │
-                          │             │  ├──────────────┤   │
-                          │             │  │Summary Agent │   │
-                          │             │  ├──────────────┤   │
-                          │             │  │Category Agent│   │
-                          │             │  ├──────────────┤   │
-                          │             │  │ Trend Agent  │   │
-                          │             │  └──────────────┘   │
-                          │             └────────────┬────────┘
-                          │                          │
-                          │                    ┌─────▼──────┐
-                          │                    │ Aggregator │
-                          │                    └─────┬──────┘
-                          │                          │
-                          └──────────────────────────▼
-                                                    END
+  |
+  v
+fetch --> curate --> supervisor --(too few articles, max 2 retries)--> fetch (rewritten query)
+                         |------(still too few)--------------------> give_up --> END
+                         v
+                  analysts  (parallel: categories, trends)
+                         v
+                  writers   (parallel: blog, summary; read the analysts' output)
+                         v
+                  critic --(problems found, max 2 rounds)--> redo ONLY the failed sections
+                         |
+                         v (all good)
+                  aggregator --> END
 ```
 
-### What makes this genuinely multi-agent
+Parallel stages use LangGraph's `Send` API: one worker per task, all running at the same time.
 
-| Feature | Implementation |
-|---|---|
-| **Supervisor routing** | LLM reads query + article count, returns JSON decision on which agents to run |
-| **Parallel execution** | `Send` API fans out to Blog, Summary, Categories, Trends simultaneously |
-| **Conditional retry** | If articles < 3, supervisor routes back to Fetcher with a broader query (max 2 retries) |
-| **MemorySaver checkpointing** | Every run saved per `thread_id`; resumable across requests |
-| **Shared LLM instance** | Single `ChatGroq` client initialized once, reused across all agents |
-| **TypedDict state** | Fully typed `NewsState` — not a plain dict subclass |
+### Agents
 
----
+| Agent | Uses LLM | Role |
+|---|---|---|
+| **Fetcher** | Yes (tool calling) | Calls the `search_newsapi` tool, reads results, retries with a better query if needed |
+| **Query rewriter** | Yes | Broadens the search query when too few articles come back |
+| **Curator** | No | Removes junk and duplicates, sorts newest first, numbers articles 1..n |
+| **Supervisor** | Yes (structured output) | Chooses which analysis tasks to run; code enforces minimum-data rules and always runs `summary` |
+| **Category analyst** | Yes | Groups articles into 3-6 themes |
+| **Trend analyst** | Yes | Finds 3-5 trends with a clearly labelled outlook |
+| **Blog writer** | Yes | 1000-1500 word article, uses the analysts' output |
+| **Summary writer** | Yes | 150-200 word executive summary |
+| **Critic** | Code + LLM | Code checks (valid `[n]` citations, coverage, cut-off text) plus an LLM fact-check of blog, summary and trends |
+| **Aggregator** | No | Builds the final report with status and warnings |
 
-## Agent Roles
+### Reliability features
 
-| # | Agent | Type | Role |
-|---|---|---|---|
-| 1 | **Fetcher** | Data | Pulls articles from NewsAPI; uses broader query on retry |
-| 2 | **Curator** | Data | Deduplicates and cleans raw articles |
-| 3 | **Supervisor** ⭐ | LLM | Decides which agents to run; triggers retry if articles insufficient |
-| 4 | **Blog Agent** | LLM (parallel) | Writes 1000–1500 word narrative analysis |
-| 5 | **Summary Agent** | LLM (parallel) | Generates 150–200 word executive summary |
-| 6 | **Category Agent** | LLM (parallel) | Groups articles into 5–7 thematic buckets |
-| 7 | **Trend Agent** | LLM (parallel) | Detects patterns and forecasts implications |
-| 8 | **Aggregator** | Logic | Collects all parallel outputs into final structured report |
+- **Hard rules in code:** the LLM can't skip `summary`, and `categories` / `trends` need at least 5 / 8 articles.
+- **Fallbacks:** if the supervisor, query rewriter or critic LLM fails, the pipeline falls back to sensible defaults instead of crashing.
+- **Retries:** LLM calls retry with exponential backoff (up to 4 attempts).
+- **Honest status:** every report is `success`, `partial` (with warnings) or an error; unresolved critic issues are shown to the user.
+- **Prompt-injection guard:** article text is marked as untrusted data in every prompt.
 
 ---
 
@@ -94,66 +69,57 @@ START
 
 | Layer | Technology |
 |---|---|
-| Agent Orchestration | LangGraph `StateGraph`, `Send` API, `conditional_edges`, `MemorySaver` |
-| LLM | Groq — `llama-3.3-70b-versatile` |
-| Backend | FastAPI (async, CORS, Pydantic validation) |
-| News Data | NewsAPI (real-time, 10 languages) |
-| Frontend | Vanilla JS + CSS, dark theme, tab-based UI |
-| Deployment | Vercel (serverless Python) |
+| Orchestration | LangGraph `StateGraph`, `Send`, conditional edges |
+| LLM | Groq, `llama-3.3-70b-versatile` (override with `GROQ_MODEL`) |
+| Backend | FastAPI (async, Pydantic validation, Server-Sent Events) |
+| News data | NewsAPI `/v2/everything` (English articles) |
+| Frontend | Vanilla JS + CSS, dark theme, tabbed UI with live progress |
+| Deployment | Vercel (Python serverless) |
 
 ---
 
-## Features
-
-- **LLM Supervisor** — dynamic agent routing, not hardcoded edges
-- **Parallel analysis** — 4 agents run concurrently via `Send` API
-- **Conditional retry** — auto-broadens query if article count is too low
-- **Session checkpointing** — every run resumable by `thread_id`
-- **10 languages** — en, es, fr, de, it, pt, ar, zh, nl, ru
-- **Article Explainer** — on-demand plain-English breakdown of any article
-- **Graph info endpoint** — `/api/graph-info` returns full agent topology as JSON
-- **Dark-themed UI** — responsive, tab-based, no framework dependencies
-
----
-
-## API Endpoints
+## API
 
 | Method | Endpoint | Description |
 |---|---|---|
-| `GET` | `/` | Serves the frontend UI |
-| `GET` | `/api/health` | Health check + version |
-| `GET` | `/api/graph-info` | Full agent topology metadata |
-| `GET` | `/api/topics` | 10 predefined AI/ML topic queries |
-| `POST` | `/api/generate` | Run the multi-agent pipeline |
-| `POST` | `/api/explain` | On-demand article explanation |
+| `GET` | `/` | Web UI |
+| `GET` | `/api/health` | Liveness check and whether API keys are configured |
+| `POST` | `/api/generate` | Run the pipeline, return the finished report as JSON |
+| `POST` | `/api/generate/stream` | Same, but streams a `progress` event per finished step, then `result` (or `error`) |
+| `POST` | `/api/explain` | Plain-English explanation of one article |
 
-### `/api/generate` — Request
+### `POST /api/generate`
+
+Request:
 
 ```json
 {
   "query": "Artificial Intelligence",
-  "num_articles": 15,
-  "language": "en",
-  "thread_id": "optional-uuid-to-resume-session"
+  "domain": "Technology",
+  "num_articles": 15
 }
 ```
 
-### `/api/generate` — Response
+`query` is required (1-200 chars). `domain` is optional. `num_articles` is 1-50 (default 15).
+
+Response:
 
 ```json
 {
   "status": "success",
-  "thread_id": "uuid",
   "articles_count": 14,
-  "supervisor_reasoning": "All 4 tasks activated: 14 articles provide sufficient data for trend analysis.",
-  "tasks_completed": ["blog", "summary", "categories", "trends"],
-  "articles": [...],
+  "articles": [{"id": 1, "title": "...", "summary": "...", "source": "...", "url": "...", "published": "...", "content": "..."}],
+  "supervisor_reasoning": "...",
+  "tasks_completed": ["summary", "categories", "trends", "blog"],
   "blog": "...",
   "summary": "...",
   "categories": "...",
-  "trends": "..."
+  "trends": "...",
+  "warnings": []
 }
 ```
+
+Error responses: `400` invalid input, `404` too few articles found, `502` analysis failed, `503` service not configured or LLM unavailable.
 
 ---
 
@@ -161,13 +127,15 @@ START
 
 ```
 MultiAgent-NewsHub/
-├── agent.py          # 8-node multi-agent graph (Supervisor + parallel Send)
-├── app.py            # FastAPI backend with thread_id + graph-info endpoint
-├── index.html        # Dark-themed frontend UI
-├── requirements.txt  # Python dependencies
-├── vercel.json       # Vercel deployment config
-├── .env              # API keys — never commit this
-├── .gitignore        # Excludes .env
+├── agent.py          # LangGraph workflow: all agents, prompts, routing
+├── app.py            # FastAPI app and routes (plain + streaming)
+├── llm.py            # Shared ChatGroq client, retry with backoff, structured output
+├── news_tools.py     # NewsAPI client, text cleaning, de-duplication
+├── schemas.py        # Pydantic models
+├── index.html        # Frontend
+├── requirements.txt
+├── vercel.json
+├── .gitignore
 └── README.md
 ```
 
@@ -175,58 +143,36 @@ MultiAgent-NewsHub/
 
 ## Setup
 
-**Prerequisites:** Python 3.9+, pip
+**Prerequisites:** Python 3.10+
 
-**1. Clone**
 ```bash
 git clone https://github.com/sonusaini209/MultiAgent-NewsHub
 cd MultiAgent-NewsHub
-```
-
-**2. Virtual environment**
-```bash
 python -m venv venv
 source venv/bin/activate      # macOS/Linux
 venv\Scripts\activate         # Windows
-```
-
-**3. Install dependencies**
-```bash
 pip install -r requirements.txt
 ```
 
-**4. API keys** — create a `.env` file:
+Create a `.env` file (never commit it):
+
 ```env
 NEWS_API_KEY=your_newsapi_key_here
 GROQ_API_KEY=gsk_your_groq_key_here
+# optional
+GROQ_MODEL=llama-3.3-70b-versatile
 ```
 
-Get them free at [newsapi.org](https://newsapi.org) and [console.groq.com](https://console.groq.com).
+Get keys at [newsapi.org](https://newsapi.org) and [console.groq.com](https://console.groq.com).
 
-**5. Run**
 ```bash
 uvicorn app:app --reload
 ```
 
-Open [http://localhost:8000](http://localhost:8000)
-
----
-
-## How the Supervisor Works
-
-On every run, after curation, the Supervisor agent receives the article count and sample titles and calls the LLM with a structured prompt. The LLM responds in JSON:
-
-```json
-{
-  "tasks": ["blog", "summary", "categories", "trends"],
-  "reasoning": "14 articles provide sufficient volume for all analysis types."
-}
-```
-
-The `supervisor_router` function then uses LangGraph's `Send` API to dispatch each task as a parallel branch — one `analysis_agent` instance per task. If articles < 3, it routes back to the Fetcher with a broader query instead.
+Open http://localhost:8000
 
 ---
 
 ## License
 
-MIT — see [LICENSE](./LICENSE) for details.
+MIT, see [LICENSE](./LICENSE).
