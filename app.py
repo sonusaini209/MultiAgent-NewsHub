@@ -1,187 +1,143 @@
+"""MultiAgent-NewsHub API (FastAPI).
+
+  GET  /                     web UI
+  GET  /api/health           liveness check
+  POST /api/generate         run the agents, return the finished report as JSON
+  POST /api/generate/stream  same, but streams live progress (Server-Sent Events)
+  POST /api/explain          explain one article
 """
-MultiAgent-NewsHub — app.py (Upgraded)
-=======================================
-FastAPI backend updated to:
-  - Pass thread_id for MemorySaver checkpointing
-  - Return supervisor_reasoning and tasks_completed in response
-  - Expose new /api/graph-info endpoint for interview demos
-"""
+import json
+import logging
+import os
+from pathlib import Path
 
-from fastapi import FastAPI, HTTPException
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
-from pydantic import BaseModel
-import sys, os, uuid
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
+from pydantic import BaseModel, ConfigDict, Field
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from agent import create_graph, explain_article, NewsState
+import llm
+from agent import NODE_LABELS, create_graph, explain_article, new_run
 
-app = FastAPI(
-    title="MultiAgent-NewsHub API",
-    description="AI-Powered Multi-Agent News Intelligence — Supervisor + Parallel Execution",
-    version="2.0.0",
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-# Compile graph once at startup (MemorySaver persists across requests)
+app = FastAPI(title="MultiAgent-NewsHub", version="3.0.0")
 graph = create_graph()
+BASE_DIR = Path(__file__).resolve().parent
 
 
-# ── Frontend ───────────────────────────────────────────────────────────
-
-@app.get("/")
-async def serve_ui():
-    return FileResponse("index.html")
-
-
-# ── Request / Response models ──────────────────────────────────────────
-
+# ── Request models ─────────────────────────────────────────────────────
 class GenerateRequest(BaseModel):
-    query: str
-    num_articles: int = 15
-    language: str = "en"
-    thread_id: str | None = None  # optional: pass to resume a checkpointed session
+    model_config = ConfigDict(str_strip_whitespace=True)
+
+    query: str = Field(min_length=1, max_length=200)
+    domain: str = Field(default="", max_length=80)
+    num_articles: int = Field(default=15, ge=1, le=50)
 
 
 class ExplainRequest(BaseModel):
-    title: str
-    content: str
+    title: str = Field(min_length=1, max_length=300)
+    content: str = Field(min_length=1, max_length=6000)
 
 
-# ── Health + metadata ──────────────────────────────────────────────────
+@app.exception_handler(RequestValidationError)
+async def validation_error(request: Request, exc: RequestValidationError):
+    """Turn Pydantic errors into one readable message the UI can show."""
+    first = exc.errors()[0]
+    field = ".".join(str(p) for p in first["loc"] if p != "body")
+    message = str(first["msg"]).removeprefix("Value error, ")
+    return JSONResponse(status_code=400, content={"detail": f"{field}: {message}" if field else message})
+
+
+# ── Helpers ────────────────────────────────────────────────────────────
+def require_llm() -> None:
+    if not llm.llm_configured():
+        raise HTTPException(503, "The AI service is not configured on this server (GROQ_API_KEY missing).")
+
+
+def require_news() -> None:
+    if not os.getenv("NEWS_API_KEY"):
+        raise HTTPException(503, "The news source is not configured on this server (NEWS_API_KEY missing).")
+
+
+def check_report(report: dict | None) -> dict:
+    """Return the report if the run produced one; otherwise raise the matching HTTP error."""
+    status = (report or {}).get("status")
+    if status == "insufficient_articles":
+        raise HTTPException(404, report["message"])
+    if status not in ("success", "partial"):
+        raise HTTPException(502, "The AI analysis could not be completed. Please try again in a minute.")
+    return report
+
+
+def sse(event: str, data: dict) -> str:
+    return f"event: {event}\ndata: {json.dumps(data, ensure_ascii=False)}\n\n"
+
+
+GRAPH_CONFIG = {"recursion_limit": 50}
+
+
+# ── Routes ─────────────────────────────────────────────────────────────
+@app.get("/")
+async def home():
+    return FileResponse(BASE_DIR / "index.html")
+
 
 @app.get("/api/health")
-async def health_check():
-    return {"status": "healthy", "version": "2.0.0"}
+async def health():
+    return {"status": "healthy", "llm_configured": llm.llm_configured(),
+            "news_api_configured": bool(os.getenv("NEWS_API_KEY"))}
 
-
-@app.get("/api/graph-info")
-async def graph_info():
-    """
-    Returns architecture metadata — useful for interview demos and README.
-    Shows the multi-agent topology: nodes, edges, supervisor routing.
-    """
-    return {
-        "architecture": "Supervisor Multi-Agent with Parallel Execution",
-        "agents": [
-            {"name": "Fetcher",     "role": "Pulls articles from NewsAPI; supports retry with broader query"},
-            {"name": "Curator",     "role": "Deduplicates and cleans raw articles"},
-            {"name": "Supervisor",  "role": "LLM decides which analysis agents to run; triggers retry if articles < 3"},
-            {"name": "Blog Agent",  "role": "Writes 1000-1500 word narrative analysis (parallel)"},
-            {"name": "Summary Agent","role": "Generates 150-200 word executive summary (parallel)"},
-            {"name": "Category Agent","role": "Groups articles into thematic buckets (parallel)"},
-            {"name": "Trend Agent", "role": "Detects patterns and forecasts future implications (parallel)"},
-            {"name": "Aggregator",  "role": "Collects all parallel outputs into final structured report"},
-        ],
-        "features": [
-            "LLM Supervisor routing (not hardcoded edges)",
-            "Parallel agent execution via LangGraph Send API",
-            "Conditional retry on insufficient articles",
-            "MemorySaver checkpointing (resumable per thread_id)",
-            "Single shared LLM instance (not re-created per agent)",
-        ],
-        "graph_edges": {
-            "fixed":       ["START→fetch", "fetch→curate", "curate→supervisor", "analysis_agent→aggregator", "aggregator→END"],
-            "conditional": ["supervisor→fetch (retry)", "supervisor→[Send×N analysis_agent] (parallel fan-out)"],
-        },
-    }
-
-
-@app.get("/api/topics")
-async def get_topics():
-    topics = {
-        "🤖 AI & Machine Learning":       "Artificial Intelligence OR Machine Learning OR AI",
-        "🧠 Deep Learning":                "deep learning OR neural network OR transformer",
-        "💬 Large Language Models":        "LLM OR GPT OR language model OR ChatGPT",
-        "🔬 AI Research":                  "AI research OR AI breakthrough OR artificial intelligence research",
-        "💼 AI in Business":               "AI business OR enterprise AI OR business intelligence",
-        "🎨 Generative AI":                "generative AI OR diffusion model OR text generation",
-        "🏥 AI in Healthcare":             "AI healthcare OR medical AI OR diagnostic AI",
-        "🚗 AI in Autonomous Systems":     "autonomous vehicle OR self-driving OR robotics",
-        "📊 Data Science & AI":            "data science OR machine learning analytics",
-        "🎵 AI & Creativity":              "AI art OR generative art OR AI music",
-    }
-    return {"topics": topics}
-
-
-# ── Main generation endpoint ───────────────────────────────────────────
 
 @app.post("/api/generate")
-async def generate_report(request: GenerateRequest):
-    if not request.query or not request.query.strip():
-        raise HTTPException(status_code=400, detail="Query cannot be empty")
-    if not (1 <= request.num_articles <= 50):
-        raise HTTPException(status_code=400, detail="num_articles must be between 1 and 50")
-
-    # Use provided thread_id or generate a new one (enables MemorySaver checkpointing)
-    thread_id = request.thread_id or str(uuid.uuid4())
-
-    initial_state = NewsState(
-        query=request.query,
-        domain="",
-        language=request.language,
-        num_articles=request.num_articles,
-        retry_count=0,
-        raw_articles=[],
-        curated_articles=[],
-        tasks_to_run=[],
-        supervisor_reasoning="",
-        blog_content="",
-        summary_content="",
-        categories_content="",
-        trends_content="",
-        final_report={},
-    )
-
+async def generate(req: GenerateRequest):
+    require_llm()
+    require_news()
     try:
-        result = graph.invoke(
-            initial_state,
-            config={"configurable": {"thread_id": thread_id}},
-        )
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Graph execution error: {str(e)}")
-
-    report = result.get("final_report", {})
-
-    return {
-        "status": "success",
-        "thread_id": thread_id,               # return so client can resume
-        "query": request.query,
-        "articles_count": report.get("articles_count", 0),
-        "supervisor_reasoning": report.get("supervisor_reasoning", ""),
-        "tasks_completed": report.get("tasks_completed", []),
-        "articles": result.get("curated_articles", []),
-        "blog": report.get("blog", ""),
-        "summary": report.get("summary", ""),
-        "categories": report.get("categories", ""),
-        "trends": report.get("trends", ""),
-    }
+        state = await graph.ainvoke(new_run(req.query, req.domain, req.num_articles), GRAPH_CONFIG)
+    except llm.LLMError:
+        raise HTTPException(503, "The AI service is temporarily unavailable. Please try again shortly.")
+    return check_report(state.get("final_report"))
 
 
-# ── Article explainer ──────────────────────────────────────────────────
+@app.post("/api/generate/stream")
+async def generate_stream(req: GenerateRequest):
+    """Server-Sent Events: a `progress` event per finished step, then `result` (or `error`)."""
+    require_llm()
+    require_news()
+
+    async def events():
+        report = None
+        try:
+            yield sse("progress", {"label": "Starting"})
+            run = new_run(req.query, req.domain, req.num_articles)
+            async for update in graph.astream(run, GRAPH_CONFIG, stream_mode="updates"):
+                for node, output in update.items():
+                    yield sse("progress", {"node": node, "label": NODE_LABELS.get(node, node)})
+                    if node in ("aggregator", "give_up"):
+                        report = output["final_report"]
+            yield sse("result", check_report(report))
+        except HTTPException as exc:
+            yield sse("error", {"detail": exc.detail})
+        except llm.LLMError:
+            yield sse("error", {"detail": "The AI service is temporarily unavailable."})
+
+    return StreamingResponse(events(), media_type="text/event-stream",
+                             headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
+
 
 @app.post("/api/explain")
-async def explain_article_endpoint(request: ExplainRequest):
-    if not request.title or not request.title.strip():
-        raise HTTPException(status_code=400, detail="Title cannot be empty")
-    if not request.content or not request.content.strip():
-        raise HTTPException(status_code=400, detail="Content cannot be empty")
-
+async def explain(req: ExplainRequest):
+    require_llm()
     try:
-        explanation = explain_article(request.title, request.content)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Explainer error: {str(e)}")
-
-    return {"status": "success", "title": request.title, "explanation": explanation}
+        explanation = await explain_article(req.title, req.content)
+    except llm.LLMError:
+        raise HTTPException(503, "The AI service is temporarily unavailable. Please try again shortly.")
+    return {"status": "success", "title": req.title, "explanation": explanation}
 
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+
+    uvicorn.run(app, host="0.0.0.0", port=int(os.getenv("PORT", "8000")))
+
