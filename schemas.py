@@ -33,3 +33,4 @@ class TaskVerdict(BaseModel):
 
 class ReviewResult(BaseModel):
     verdicts: List[TaskVerdict]
+
