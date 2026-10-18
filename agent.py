@@ -1,4 +1,4 @@
-"""MultiAgent-NewsHub: the LangGraph workflow.
+""""MultiAgent-NewsHub: the LangGraph workflow.
 
     fetch -> curate -> supervisor --(too few articles)--> fetch again (query is rewritten), max 2 times
                                   \\--(still too few)----> give_up -> END
@@ -480,6 +480,10 @@ def create_graph():
     g.add_edge("give_up", END)
     return g.compile()
 
+
+# ── Article explainer (used by the "Explain" button) ───────────────────
+async def explain_article(title: str, content: str) -> str:
+    return await call_llm(EXPLAIN_SYSTEM, EXPLAIN_HUMAN, {"title": title[:300], "content": content[:4000]})
 
 # ── Article explainer (used by the "Explain" button) ───────────────────
 async def explain_article(title: str, content: str) -> str:
