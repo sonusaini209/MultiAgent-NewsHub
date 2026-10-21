@@ -14,7 +14,7 @@ load_dotenv()
 logger = logging.getLogger("newshub.llm")
 
 MAX_ATTEMPTS = 4
-NON_RETRYABLE_STATUS = (400, 401, 403, 404, 422)
+NON_RETRYABLE_STATUS = (400, 401, 403, 404, 413, 422)
 
 
 class LLMError(Exception):
