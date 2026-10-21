@@ -17,7 +17,7 @@ from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 from pydantic import BaseModel, ConfigDict, Field
 
 import llm
-from agent import NODE_LABELS, create_graph, explain_article, new_run
+from agent import MIN_ARTICLES, NODE_LABELS, create_graph, explain_article, new_run
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 
@@ -32,7 +32,7 @@ class GenerateRequest(BaseModel):
 
     query: str = Field(min_length=1, max_length=200)
     domain: str = Field(default="", max_length=80)
-    num_articles: int = Field(default=15, ge=1, le=50)
+    num_articles: int = Field(default=15, ge=MIN_ARTICLES, le=50)   # the pipeline needs at least MIN_ARTICLES
 
 
 class ExplainRequest(BaseModel):
